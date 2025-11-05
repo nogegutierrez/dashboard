@@ -1,0 +1,1496 @@
+<!doctype html>
+
+<html lang="es">
+
+<head>
+
+  <meta charset="utf-8" />
+
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+
+  <meta name="description" content="Aplicación para gestionar números de serie escaneados desde dispositivos USB" />
+
+  <title>Scanner Serial Manager — Simple</title>
+
+  <style>
+
+    :root {
+
+      --bg: #0f1724;
+
+      --card: #0b1220;
+
+      --accent: #06b6d4;
+
+      --muted: #9aa4b2;
+
+      --danger: #ff5252;
+
+      --success: #10b981;
+
+    }
+
+    
+
+    * {
+
+      box-sizing: border-box;
+
+    }
+
+    
+
+    body {
+
+      font-family: Inter, system-ui, Segoe UI, Arial, sans-serif;
+
+      margin: 0;
+
+      padding: 20px;
+
+      background: linear-gradient(180deg, #071023, #081425);
+
+      color: #e6eef6;
+
+      min-height: 100vh;
+
+    }
+
+    
+
+    h1 {
+
+      margin: 0 0 12px 0;
+
+      font-size: 20px;
+
+    }
+
+    
+
+    .top {
+
+      display: flex;
+
+      gap: 12px;
+
+      align-items: center;
+
+      margin-bottom: 14px;
+
+      flex-wrap: wrap;
+
+    }
+
+    
+
+    .note {
+
+      color: var(--muted);
+
+      font-size: 13px;
+
+      max-width: 500px;
+
+    }
+
+    
+
+    .grid {
+
+      display: grid;
+
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+
+      gap: 12px;
+
+    }
+
+    
+
+    @media (max-width: 768px) {
+
+      .grid {
+
+        grid-template-columns: 1fr;
+
+      }
+
+    }
+
+    
+
+    .card {
+
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+
+      border: 1px solid rgba(255,255,255,0.03);
+
+      padding: 12px;
+
+      border-radius: 8px;
+
+      min-height: 260px;
+
+      display: flex;
+
+      flex-direction: column;
+
+      transition: all 0.2s ease;
+
+    }
+
+    
+
+    .card.active {
+
+      outline: 2px solid rgba(6,182,212,0.18);
+
+      box-shadow: 0 6px 18px rgba(6,182,212,0.06);
+
+      transform: translateY(-2px);
+
+    }
+
+    
+
+    .card h2 {
+
+      margin: 0 0 6px 0;
+
+      font-size: 15px;
+
+      display: flex;
+
+      justify-content: space-between;
+
+      align-items: center;
+
+    }
+
+    
+
+    .col-controls {
+
+      display: flex;
+
+      gap: 6px;
+
+      align-items: center;
+
+    }
+
+    
+
+    .btn {
+
+      background: transparent;
+
+      border: 1px solid rgba(255,255,255,0.06);
+
+      padding: 6px 8px;
+
+      border-radius: 6px;
+
+      color: inherit;
+
+      cursor: pointer;
+
+      font-size: 13px;
+
+      transition: all 0.15s ease;
+
+    }
+
+    
+
+    .btn:hover {
+
+      background: rgba(255,255,255,0.05);
+
+    }
+
+    
+
+    .btn:active {
+
+      transform: translateY(1px);
+
+    }
+
+    
+
+    .btn.primary {
+
+      background: var(--accent);
+
+      border: none;
+
+      color: #04202a;
+
+    }
+
+    
+
+    .btn.primary:hover {
+
+      background: #0891b2;
+
+    }
+
+    
+
+    .btn.small {
+
+      padding: 4px 6px;
+
+      font-size: 12px;
+
+    }
+
+    
+
+    ul.list {
+
+      list-style: none;
+
+      margin: 8px 0 0 0;
+
+      padding: 0;
+
+      overflow: auto;
+
+      flex: 1;
+
+      border-radius: 6px;
+
+      border: 1px dashed rgba(255,255,255,0.02);
+
+      padding: 8px;
+
+      background: linear-gradient(180deg, rgba(255,255,255,0.01), transparent);
+
+    }
+
+    
+
+    li.item {
+
+      padding: 6px 8px;
+
+      border-radius: 6px;
+
+      margin-bottom: 6px;
+
+      background: rgba(255,255,255,0.01);
+
+      display: flex;
+
+      justify-content: space-between;
+
+      align-items: center;
+
+      font-size: 13px;
+
+      transition: all 0.2s ease;
+
+    }
+
+    
+
+    li.item.dup {
+
+      background: rgba(255,82,82,0.08);
+
+      border-left: 4px solid rgba(255,82,82,0.18);
+
+    }
+
+    
+
+    li.item.success {
+
+      background: rgba(16,185,129,0.08);
+
+      border-left: 4px solid rgba(16,185,129,0.18);
+
+    }
+
+    
+
+    .count {
+
+      font-size: 12px;
+
+      color: var(--muted);
+
+      margin-left: 8px;
+
+    }
+
+    
+
+    .controls-bottom {
+
+      display: flex;
+
+      gap: 10px;
+
+      align-items: center;
+
+      margin-top: 10px;
+
+      flex-wrap: wrap;
+
+    }
+
+    
+
+    .toast {
+
+      position: fixed;
+
+      right: 18px;
+
+      bottom: 18px;
+
+      background: #06121a;
+
+      padding: 10px 14px;
+
+      border-radius: 8px;
+
+      border: 1px solid rgba(255,255,255,0.04);
+
+      box-shadow: 0 6px 30px rgba(2,6,23,0.6);
+
+      color: #fff;
+
+      z-index: 1000;
+
+      animation: slideIn 0.3s ease;
+
+    }
+
+    
+
+    @keyframes slideIn {
+
+      from { transform: translateX(100%); opacity: 0; }
+
+      to { transform: translateX(0); opacity: 1; }
+
+    }
+
+    
+
+    .hidden-input {
+
+      position: fixed;
+
+      left: -10000px;
+
+      top: auto;
+
+      opacity: 0;
+
+    }
+
+    
+
+    .searchline {
+
+      display: flex;
+
+      gap: 8px;
+
+      align-items: center;
+
+      margin-left: auto;
+
+    }
+
+    
+
+    .export {
+
+      font-size: 13px;
+
+      color: var(--muted);
+
+    }
+
+    
+
+    .hint {
+
+      font-size: 12px;
+
+      color: var(--muted);
+
+      margin-left: 6px;
+
+    }
+
+    
+
+    footer {
+
+      margin-top: 14px;
+
+      color: var(--muted);
+
+      font-size: 12px;
+
+    }
+
+    
+
+    select {
+
+      background: rgba(255,255,255,0.05);
+
+      border: 1px solid rgba(255,255,255,0.1);
+
+      border-radius: 4px;
+
+      padding: 4px 8px;
+
+      color: inherit;
+
+      font-size: 13px;
+
+    }
+
+    
+
+    .status-indicator {
+
+      display: inline-block;
+
+      width: 8px;
+
+      height: 8px;
+
+      border-radius: 50%;
+
+      margin-right: 6px;
+
+    }
+
+    
+
+    .status-active {
+
+      background-color: var(--success);
+
+      animation: pulse 2s infinite;
+
+    }
+
+    
+
+    .status-inactive {
+
+      background-color: var(--muted);
+
+    }
+
+    
+
+    @keyframes pulse {
+
+      0% { opacity: 1; }
+
+      50% { opacity: 0.5; }
+
+      100% { opacity: 1; }
+
+    }
+
+    
+
+    .empty-state {
+
+      text-align: center;
+
+      color: var(--muted);
+
+      font-size: 13px;
+
+      padding: 20px 0;
+
+    }
+
+    
+
+    .stats {
+
+      display: flex;
+
+      gap: 10px;
+
+      margin-top: 10px;
+
+      font-size: 12px;
+
+      color: var(--muted);
+
+    }
+
+  </style>
+
+</head>
+
+<body>
+
+  <h1>Scanner Serial Manager — app sencilla</h1>
+
+  <div class="top">
+
+    <div class="note">Scanner USB actúa como teclado (envía ENTER al final). Selecciona la columna activa y escanea.</div>
+
+    <div class="searchline">
+
+      <span class="status-indicator status-active" id="statusIndicator"></span>
+
+      <label class="hint">Escáner activo:</label>
+
+      <select id="scannerMode" title="Modo de operación">
+
+        <option value="kbd">Modo teclado (HID)</option>
+
+        <option value="webserial">Modo WebSerial (avanzado)</option>
+
+      </select>
+
+    </div>
+
+  </div>
+
+
+
+  <div style="margin-bottom:10px">
+
+    <div class="controls-bottom">
+
+      <button id="focusBtn" class="btn small">Forzar foco al scanner</button>
+
+      <button id="exportCSV" class="btn small">Exportar CSV</button>
+
+      <button id="clearAll" class="btn small">Limpiar todo</button>
+
+      <div class="export">Columna activa: <strong id="activeColLabel">ONT</strong></div>
+
+    </div>
+
+    <div class="stats">
+
+      <span>Total seriales: <strong id="totalCount">0</strong></span>
+
+      <span>Únicos: <strong id="uniqueCount">0</strong></span>
+
+    </div>
+
+  </div>
+
+
+
+  <div class="grid" id="cols">
+
+    <!-- Column template repeated 4x -->
+
+    <div class="card" data-col="ONT" id="col-ONT">
+
+      <h2>
+
+        <span>ONT <span class="count" id="count-ONT">0</span></span>
+
+        <span class="col-controls">
+
+          <button class="btn small" data-action="setActive" data-col="ONT">Seleccionar</button>
+
+          <button class="btn small" data-action="copy" data-col="ONT">Copiar</button>
+
+          <button class="btn small" data-action="clear" data-col="ONT">Limpiar</button>
+
+        </span>
+
+      </h2>
+
+      <ul class="list" id="list-ONT" aria-live="polite"></ul>
+
+    </div>
+
+
+
+    <div class="card" data-col="EEROS" id="col-EEROS">
+
+      <h2>
+
+        <span>EEROS <span class="count" id="count-EEROS">0</span></span>
+
+        <span class="col-controls">
+
+          <button class="btn small" data-action="setActive" data-col="EEROS">Seleccionar</button>
+
+          <button class="btn small" data-action="copy" data-col="EEROS">Copiar</button>
+
+          <button class="btn small" data-action="clear" data-col="EEROS">Limpiar</button>
+
+        </span>
+
+      </h2>
+
+      <ul class="list" id="list-EEROS"></ul>
+
+    </div>
+
+
+
+    <div class="card" data-col="STB" id="col-STB">
+
+      <h2>
+
+        <span>STB <span class="count" id="count-STB">0</span></span>
+
+        <span class="col-controls">
+
+          <button class="btn small" data-action="setActive" data-col="STB">Seleccionar</button>
+
+          <button class="btn small" data-action="copy" data-col="STB">Copiar</button>
+
+          <button class="btn small" data-action="clear" data-col="STB">Limpiar</button>
+
+        </span>
+
+      </h2>
+
+      <ul class="list" id="list-STB"></ul>
+
+    </div>
+
+
+
+    <div class="card" data-col="STICKS" id="col-STICKS">
+
+      <h2>
+
+        <span>STICKS <span class="count" id="count-STICKS">0</span></span>
+
+        <span class="col-controls">
+
+          <button class="btn small" data-action="setActive" data-col="STICKS">Seleccionar</button>
+
+          <button class="btn small" data-action="copy" data-col="STICKS">Copiar</button>
+
+          <button class="btn small" data-action="clear" data-col="STICKS">Limpiar</button>
+
+        </span>
+
+      </h2>
+
+      <ul class="list" id="list-STICKS"></ul>
+
+    </div>
+
+  </div>
+
+
+
+  <input id="hiddenScannerInput" class="hidden-input" autocomplete="off" autofocus />
+
+
+
+  <div id="toast-area"></div>
+
+
+
+  <footer>
+
+    Recomendación: configura tu scanner para que envíe <code>Enter</code> al final del escaneo. Si no envía Enter, la app espera 700ms sin actividad para finalizar el valor.
+
+  </footer>
+
+
+
+<script>
+
+(() => {
+
+  // Column names
+
+  const COLS = ['ONT','EEROS','STB','STICKS'];
+
+  // Data store: arrays per column
+
+  const data = { ONT:[], EEROS:[], STB:[], STICKS:[] };
+
+  // Global set for uniqueness
+
+  const globalSet = new Set();
+
+  // Active column
+
+  let activeCol = 'ONT';
+
+  const activeLabel = document.getElementById('activeColLabel');
+
+  activeLabel.textContent = activeCol;
+
+
+
+  // Hidden input to capture scanner keyboard HID input
+
+  const hiddenInput = document.getElementById('hiddenScannerInput');
+
+  const focusBtn = document.getElementById('focusBtn');
+
+  focusBtn.addEventListener('click', ()=> {
+
+    hiddenInput.focus();
+
+    toast('Foco forzado al campo de escaneo');
+
+  });
+
+
+
+  // Toast
+
+  function toast(msg, opts={}) {
+
+    const el = document.createElement('div');
+
+    el.className = 'toast';
+
+    el.textContent = msg;
+
+    
+
+    if (opts.danger) {
+
+      el.style.borderColor = 'rgba(255,82,82,0.18)';
+
+    } else if (opts.success) {
+
+      el.style.borderColor = 'rgba(16,185,129,0.18)';
+
+    }
+
+    
+
+    document.getElementById('toast-area').appendChild(el);
+
+    setTimeout(()=> el.remove(), 3000);
+
+  }
+
+
+
+  // small beep for dup
+
+  function beep() {
+
+    try {
+
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+
+      const o = ctx.createOscillator();
+
+      const g = ctx.createGain();
+
+      o.type = 'sine';
+
+      o.frequency.value = 600;
+
+      g.gain.value = 0.02;
+
+      o.connect(g); g.connect(ctx.destination);
+
+      o.start();
+
+      setTimeout(()=>{ o.stop(); ctx.close(); }, 120);
+
+    } catch(e){}
+
+  }
+
+
+
+  // render helpers
+
+  function renderList(col) {
+
+    const ul = document.getElementById('list-'+col);
+
+    ul.innerHTML = '';
+
+    
+
+    if (data[col].length === 0) {
+
+      const empty = document.createElement('div');
+
+      empty.className = 'empty-state';
+
+      empty.textContent = 'No hay seriales en esta columna';
+
+      ul.appendChild(empty);
+
+      return;
+
+    }
+
+    
+
+    data[col].forEach((s, idx) => {
+
+      const li = document.createElement('li');
+
+      li.className = 'item';
+
+      li.dataset.value = s;
+
+      li.innerHTML = '<span>'+escapeHtml(s)+'</span><button class="btn small" data-action="remove" data-col="'+col+'" data-idx="'+idx+'" title="Eliminar este serial">x</button>';
+
+      ul.appendChild(li);
+
+    });
+
+    document.getElementById('count-'+col).textContent = data[col].length;
+
+    updateStats();
+
+  }
+
+
+
+  function escapeHtml(str){ 
+
+    return str.replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;', "'":'&#39;' })[m]); 
+
+  }
+
+
+
+  // Update global statistics
+
+  function updateStats() {
+
+    const totalCount = COLS.reduce((sum, col) => sum + data[col].length, 0);
+
+    document.getElementById('totalCount').textContent = totalCount;
+
+    document.getElementById('uniqueCount').textContent = globalSet.size;
+
+  }
+
+
+
+  // Add serial to column if unique
+
+  function addSerialToCol(col, serialRaw) {
+
+    const serial = normalize(serialRaw);
+
+    if (!serial) return;
+
+    
+
+    if (globalSet.has(serial)) {
+
+      // find where it exists (optional)
+
+      toast('Duplicado detectado: ' + serial, {danger:true});
+
+      beep();
+
+      highlightDuplicate(serial);
+
+      return false;
+
+    }
+
+    
+
+    data[col].push(serial);
+
+    globalSet.add(serial);
+
+    renderList(col);
+
+    return true;
+
+  }
+
+
+
+  // Normalize scanned string
+
+  function normalize(s) {
+
+    if (!s) return '';
+
+    return s.trim(); // keep case (many serials are case-sensitive) — change to .toUpperCase() if desired
+
+  }
+
+
+
+  // highlight duplicate item(s)
+
+  function highlightDuplicate(value) {
+
+    // find li elements with same data-value and add .dup for a few seconds
+
+    COLS.forEach(col => {
+
+      const ul = document.getElementById('list-'+col);
+
+      ul.querySelectorAll('li.item').forEach(li=>{
+
+        if (li.dataset.value === value) {
+
+          li.classList.add('dup');
+
+          setTimeout(()=> li.classList.remove('dup'), 2600);
+
+        }
+
+      });
+
+    });
+
+  }
+
+
+
+  // Setup column buttons (copy/clear/select/remove)
+
+  document.getElementById('cols').addEventListener('click', (ev)=>{
+
+    const btn = ev.target.closest('button');
+
+    if (!btn) return;
+
+    const action = btn.dataset.action;
+
+    const col = btn.dataset.col;
+
+    
+
+    if (action === 'setActive') {
+
+      setActive(col);
+
+    } else if (action === 'copy') {
+
+      copyColumn(col);
+
+    } else if (action === 'clear') {
+
+      clearColumn(col);
+
+    } else if (action === 'remove') {
+
+      // remove single item
+
+      const idx = Number(btn.dataset.idx);
+
+      removeAt(col, idx);
+
+    }
+
+  });
+
+
+
+  function setActive(col) {
+
+    activeCol = col;
+
+    activeLabel.textContent = activeCol;
+
+    // visual highlight
+
+    document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
+
+    const card = document.getElementById('col-'+col);
+
+    if (card) card.classList.add('active');
+
+    hiddenInput.focus();
+
+    toast('Columna activa: ' + col);
+
+  }
+
+
+
+  function copyColumn(col) {
+
+    const arr = data[col];
+
+    if (!arr.length) { 
+
+      toast('Columna vacía.'); 
+
+      return; 
+
+    }
+
+    
+
+    const text = arr.join('\n');
+
+    navigator.clipboard.writeText(text).then(()=> {
+
+      toast('Copiados ' + arr.length + ' seriales de ' + col, {success: true});
+
+    }).catch(err => {
+
+      toast('Error copiando: ' + (err && err.message ? err.message : err), {danger: true});
+
+    });
+
+  }
+
+
+
+  function clearColumn(col) {
+
+    if (!confirm('Limpiar columna ' + col + ' ?')) return;
+
+    // remove values from globalSet
+
+    data[col].forEach(v => globalSet.delete(v));
+
+    data[col] = [];
+
+    renderList(col);
+
+    toast('Columna ' + col + ' limpiada');
+
+  }
+
+
+
+  function removeAt(col, idx) {
+
+    const v = data[col][idx];
+
+    if (typeof v === 'undefined') return;
+
+    data[col].splice(idx,1);
+
+    globalSet.delete(v);
+
+    renderList(col);
+
+    toast('Serial eliminado: ' + v);
+
+  }
+
+
+
+  // Hidden input logic: capture typed chars until Enter OR pause
+
+  let buffer = '';
+
+  let timer = null;
+
+  const PAUSE_MS = 700; // if no Enter, wait this ms to decide end-of-scan
+
+
+
+  hiddenInput.addEventListener('keydown', (e)=>{
+
+    // capture Enter (13)
+
+    if (e.key === 'Enter') {
+
+      e.preventDefault();
+
+      const value = buffer || hiddenInput.value;
+
+      processScannedValue(value);
+
+      buffer = '';
+
+      hiddenInput.value = '';
+
+      clearTimeout(timer);
+
+      return;
+
+    }
+
+    
+
+    // allow normal characters to accumulate
+
+    // handle Backspace
+
+    if (e.key === 'Backspace') {
+
+      buffer = buffer.slice(0, -1);
+
+      return;
+
+    }
+
+    
+
+    // For other control keys ignore
+
+    if (e.ctrlKey || e.metaKey || e.key.length > 1) return;
+
+    buffer += e.key;
+
+    
+
+    // reset timer
+
+    clearTimeout(timer);
+
+    timer = setTimeout(() => {
+
+      const value = buffer || hiddenInput.value;
+
+      if (value) processScannedValue(value);
+
+      buffer = '';
+
+      hiddenInput.value = '';
+
+    }, PAUSE_MS);
+
+  });
+
+
+
+  // allow paste as well
+
+  hiddenInput.addEventListener('paste', (e)=>{
+
+    e.preventDefault();
+
+    const text = (e.clipboardData || window.clipboardData).getData('text') || '';
+
+    processScannedValue(text);
+
+  });
+
+
+
+  function processScannedValue(raw) {
+
+    const v = raw ? String(raw).trim() : '';
+
+    if (!v) {
+
+      return;
+
+    }
+
+    
+
+    const added = addSerialToCol(activeCol, v);
+
+    if (added) {
+
+      toast('Agregado a ' + activeCol + ': ' + v, {success: true});
+
+      
+
+      // Highlight the newly added item briefly
+
+      const ul = document.getElementById('list-'+activeCol);
+
+      const items = ul.querySelectorAll('li.item');
+
+      if (items.length > 0) {
+
+        const lastItem = items[items.length - 1];
+
+        lastItem.classList.add('success');
+
+        setTimeout(() => lastItem.classList.remove('success'), 1000);
+
+      }
+
+    }
+
+  }
+
+
+
+  // init render
+
+  COLS.forEach(c => renderList(c));
+
+  setActive(activeCol);
+
+
+
+  // Export CSV
+
+  document.getElementById('exportCSV').addEventListener('click', ()=>{
+
+    const rows = [['column','serial']];
+
+    COLS.forEach(col => {
+
+      data[col].forEach(s => rows.push([col, s]));
+
+    });
+
+    
+
+    if (rows.length === 1) {
+
+      toast('No hay datos para exportar');
+
+      return;
+
+    }
+
+    
+
+    const csv = rows.map(r => r.map(cell => '"'+String(cell).replace(/"/g,'""')+'"').join(',')).join('\n');
+
+    const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+
+    a.href = url; 
+
+    a.download = 'seriales_export_' + new Date().toISOString().slice(0, 10) + '.csv';
+
+    document.body.appendChild(a); 
+
+    a.click(); 
+
+    a.remove(); 
+
+    URL.revokeObjectURL(url);
+
+    
+
+    toast('CSV exportado correctamente', {success: true});
+
+  });
+
+
+
+  // Clear all
+
+  document.getElementById('clearAll').addEventListener('click', ()=>{
+
+    if (!confirm('Limpiar todas las columnas?')) return;
+
+    COLS.forEach(col => { data[col]=[]; renderList(col); });
+
+    globalSet.clear();
+
+    toast('Todas las columnas limpiadas');
+
+  });
+
+
+
+  // small UX: keep hidden input focused
+
+  window.addEventListener('click', ()=> hiddenInput.focus());
+
+  window.addEventListener('blur', ()=> setTimeout(()=> hiddenInput.focus(), 50));
+
+
+
+  // initial focus
+
+  setTimeout(()=> {
+
+    hiddenInput.focus();
+
+    toast('Aplicación lista para escanear. Columna activa: ' + activeCol);
+
+  }, 300);
+
+
+
+  // Utility: detect if serial already exists (for user info)
+
+  window.__app = { data, globalSet, addSerialToCol, setActive };
+
+
+
+  // Optional: WebSerial placeholder (advanced scanners that expose serial interface)
+
+  const scannerMode = document.getElementById('scannerMode');
+
+  scannerMode.addEventListener('change', (e)=>{
+
+    if (e.target.value === 'webserial') {
+
+      toast('Modo WebSerial seleccionado. Funcionalidad no habilitada en esta demo. Requiere permisos y adaptación.');
+
+    } else {
+
+      toast('Modo teclado seleccionado.');
+
+    }
+
+  });
+
+
+
+  // Add keyboard shortcuts
+
+  document.addEventListener('keydown', (e) => {
+
+    // Ctrl+1 to Ctrl+4 to switch columns
+
+    if (e.ctrlKey && e.key >= '1' && e.key <= '4') {
+
+      e.preventDefault();
+
+      const colIndex = parseInt(e.key) - 1;
+
+      if (colIndex < COLS.length) {
+
+        setActive(COLS[colIndex]);
+
+      }
+
+    }
+
+    
+
+    // Ctrl+E to export
+
+    if (e.ctrlKey && e.key === 'e') {
+
+      e.preventDefault();
+
+      document.getElementById('exportCSV').click();
+
+    }
+
+  });
+
+
+
+  // Add persistence to localStorage
+
+  function saveToStorage() {
+
+    try {
+
+      localStorage.setItem('scannerData', JSON.stringify(data));
+
+    } catch(e) {
+
+      console.warn('No se pudo guardar en localStorage:', e);
+
+    }
+
+  }
+
+
+
+  function loadFromStorage() {
+
+    try {
+
+      const saved = localStorage.getItem('scannerData');
+
+      if (saved) {
+
+        const parsed = JSON.parse(saved);
+
+        COLS.forEach(col => {
+
+          if (parsed[col]) {
+
+            data[col] = parsed[col];
+
+            parsed[col].forEach(v => globalSet.add(v));
+
+          }
+
+        });
+
+        COLS.forEach(c => renderList(c));
+
+        toast('Datos cargados desde almacenamiento local');
+
+      }
+
+    } catch(e) {
+
+      console.warn('No se pudo cargar desde localStorage:', e);
+
+    }
+
+  }
+
+
+
+  // Auto-save when data changes
+
+  const originalAdd = addSerialToCol;
+
+  addSerialToCol = function(col, serial) {
+
+    const result = originalAdd(col, serial);
+
+    if (result) saveToStorage();
+
+    return result;
+
+  };
+
+
+
+  const originalRemove = removeAt;
+
+  removeAt = function(col, idx) {
+
+    originalRemove(col, idx);
+
+    saveToStorage();
+
+  };
+
+
+
+  const originalClearColumn = clearColumn;
+
+  clearColumn = function(col) {
+
+    originalClearColumn(col);
+
+    saveToStorage();
+
+  };
+
+
+
+  // Load data on startup
+
+  loadFromStorage();
+
+
+
+})();
+
+</script>
+
+</body>
+
+</html>
+
