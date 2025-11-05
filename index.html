@@ -1024,6 +1024,76 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
+        .statistics-panel {
+            background: rgba(30, 41, 59, 0.7);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            display: none;
+        }
+
+        .statistics-panel.active {
+            display: block;
+        }
+
+        .statistics-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .statistics-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .statistics-controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .period-selector {
+            display: flex;
+            gap: 0.5rem;
+            background: rgba(15, 23, 42, 0.6);
+            padding: 0.5rem;
+            border-radius: 8px;
+        }
+
+        .period-btn {
+            padding: 0.5rem 1rem;
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: var(--light);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .period-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .period-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 300px;
+            margin-bottom: 1.5rem;
+        }
+
+        .chart-wrapper canvas {
+            max-height: 100%;
+        }
+
         /* Drag and Drop */
         .serial-item.dragging {
             opacity: 0.5;
@@ -1394,6 +1464,44 @@
             <div id="history-list"></div>
         </div>
 
+        <!-- Advanced Statistics Panel -->
+        <div class="statistics-panel" id="statistics-panel">
+            <div class="statistics-header">
+                <h2 class="statistics-title" data-i18n="stats.advanced">Advanced Statistics</h2>
+                <div class="statistics-controls">
+                    <div class="period-selector">
+                        <button class="period-btn active" data-period="day" data-i18n="stats.period.day">Day</button>
+                        <button class="period-btn" data-period="week" data-i18n="stats.period.week">Week</button>
+                        <button class="period-btn" data-period="month" data-i18n="stats.period.month">Month</button>
+                    </div>
+                    <button class="btn btn-outline" id="export-statistics">
+                        <i class="fas fa-download"></i>
+                        <span data-i18n="button.exportStats">Export Report</span>
+                    </button>
+                </div>
+            </div>
+            <div class="charts-container">
+                <div class="chart-card">
+                    <h3 style="margin-bottom: 1rem;" data-i18n="stats.chart.distribution">Distribution by Column</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="bar-chart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <h3 style="margin-bottom: 1rem;" data-i18n="stats.chart.proportion">Proportion Chart</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="pie-chart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card" style="grid-column: 1 / -1;">
+                    <h3 style="margin-bottom: 1rem;" data-i18n="stats.chart.trends">Scanning Trends</h3>
+                    <div class="chart-wrapper" style="height: 400px;">
+                        <canvas id="line-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Stats Cards -->
         <div class="stats-container">
             <div class="stat-card">
@@ -1657,12 +1765,24 @@
                     total: 'Total Serials',
                     unique: 'Unique Serials',
                     duplicates: 'Duplicates',
-                    activeColumns: 'Active Columns'
+                    activeColumns: 'Active Columns',
+                    advanced: 'Advanced Statistics',
+                    period: {
+                        day: 'Day',
+                        week: 'Week',
+                        month: 'Month'
+                    },
+                    chart: {
+                        distribution: 'Distribution by Column',
+                        proportion: 'Proportion Chart',
+                        trends: 'Scanning Trends'
+                    }
                 },
                 button: {
                     export: 'Export CSV',
                     exportExcel: 'Export Excel',
                     exportPDF: 'Export PDF',
+                    exportStats: 'Export Report',
                     import: 'Import',
                     search: 'Search',
                     print: 'Print',
@@ -1740,12 +1860,24 @@
                     total: 'Total de Seriales',
                     unique: 'Seriales Únicos',
                     duplicates: 'Duplicados',
-                    activeColumns: 'Columnas Activas'
+                    activeColumns: 'Columnas Activas',
+                    advanced: 'Estadísticas Avanzadas',
+                    period: {
+                        day: 'Día',
+                        week: 'Semana',
+                        month: 'Mes'
+                    },
+                    chart: {
+                        distribution: 'Distribución por Columna',
+                        proportion: 'Gráfico de Proporción',
+                        trends: 'Tendencias de Escaneo'
+                    }
                 },
                 button: {
                     export: 'Exportar CSV',
                     exportExcel: 'Exportar Excel',
                     exportPDF: 'Exportar PDF',
+                    exportStats: 'Exportar Reporte',
                     import: 'Importar',
                     search: 'Buscar',
                     print: 'Imprimir',
@@ -1809,6 +1941,7 @@
                 STICKS: [],
                 DUPLICATES: []
             },
+            serialTimestamps: {}, // Track when each serial was added {serial: timestamp}
             activeColumn: 'ONT',
             globalSet: new Set(),
             duplicatesMap: new Map(), // Track duplicate count for each serial
@@ -1824,7 +1957,8 @@
             notificationHistory: JSON.parse(localStorage.getItem('notificationHistory') || '[]'),
             charts: {},
             isOffline: !navigator.onLine,
-            presentationMode: false
+            presentationMode: false,
+            statisticsPeriod: 'day' // day, week, month
         };
 
         // Translation function
@@ -1940,6 +2074,7 @@
                     data: state.data,
                     globalSet: Array.from(state.globalSet),
                     duplicatesMap: Array.from(state.duplicatesMap.entries()),
+                    serialTimestamps: state.serialTimestamps,
                     activeColumn: state.activeColumn,
                     timestamp: new Date().toISOString()
                 };
@@ -1979,6 +2114,21 @@
                     // Restore duplicatesMap
                     if (parsed.duplicatesMap && Array.isArray(parsed.duplicatesMap)) {
                         state.duplicatesMap = new Map(parsed.duplicatesMap);
+                    }
+                    
+                    // Restore serialTimestamps
+                    if (parsed.serialTimestamps && typeof parsed.serialTimestamps === 'object') {
+                        state.serialTimestamps = parsed.serialTimestamps;
+                    } else {
+                        // If no timestamps, create them for existing serials (use current time as fallback)
+                        state.serialTimestamps = {};
+                        state.columns.forEach(col => {
+                            state.data[col].forEach(serial => {
+                                if (!state.serialTimestamps[serial]) {
+                                    state.serialTimestamps[serial] = new Date().toISOString();
+                                }
+                            });
+                        });
                     }
                     
                     // Restore active column
@@ -2289,6 +2439,11 @@
             // Initialize UI
             updateStats();
             
+            // Initialize charts if statistics panel is visible
+            if (document.getElementById('statistics-panel')?.classList.contains('active')) {
+                setTimeout(() => initializeCharts(), 300);
+            }
+            
             // Set active column (use saved or default to ONT)
             if (dataLoaded && state.activeColumn && state.columns.includes(state.activeColumn)) {
                 // Restore saved active column
@@ -2403,6 +2558,42 @@
                 localStorage.setItem('serialScanHistory', JSON.stringify([]));
                 renderHistory();
             });
+
+            // Statistics Panel
+            document.querySelectorAll('.nav-item').forEach(item => {
+                if (item.textContent.includes('Statistics') || item.getAttribute('data-i18n') === 'nav.statistics') {
+                    item.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const panel = document.getElementById('statistics-panel');
+                        const isActive = panel.classList.contains('active');
+                        if (!isActive) {
+                            panel.classList.add('active');
+                            setTimeout(() => initializeCharts(), 100);
+                        } else {
+                            panel.classList.remove('active');
+                        }
+                    });
+                }
+            });
+
+            // Period selector
+            document.querySelectorAll('.period-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const period = e.target.dataset.period;
+                    state.statisticsPeriod = period;
+                    
+                    // Update active button
+                    document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    
+                    // Update trends chart
+                    updateTrendsChart();
+                });
+            });
+
+            // Export statistics
+            document.getElementById('export-statistics').addEventListener('click', exportStatisticsReport);
             
             // Theme toggle
             document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
@@ -2538,8 +2729,11 @@
             // Register new serial
             state.data[state.activeColumn].push(value);
             state.globalSet.add(value);
+            // Store timestamp for statistics
+            state.serialTimestamps[value] = new Date().toISOString();
             renderColumn(state.activeColumn);
             updateStats();
+            updateCharts(); // Update charts when new data is added
             autoSave(); // Save to localStorage
             showToast(t('toast.addedTo', { column: state.activeColumn, value: value }), 'success');
             addToHistory(`Added ${value} to ${state.activeColumn}`, 'success');
@@ -2677,7 +2871,10 @@
                 state.duplicatesMap.clear();
             } else {
                 // Remove items from globalSet for regular columns
-                state.data[column].forEach(item => state.globalSet.delete(item));
+                state.data[column].forEach(item => {
+                    state.globalSet.delete(item);
+                    delete state.serialTimestamps[item];
+                });
             }
             
             state.data[column] = [];
@@ -2699,6 +2896,7 @@
             state.data.DUPLICATES = [];
             state.globalSet.clear();
             state.duplicatesMap.clear();
+            state.serialTimestamps = {};
             
             state.columns.forEach(column => renderColumn(column));
             renderColumn('DUPLICATES');
@@ -2765,6 +2963,8 @@
             } else {
                 // Remove from globalSet for regular columns
                 state.globalSet.delete(serial);
+                // Remove timestamp
+                delete state.serialTimestamps[serial];
             }
             
             renderColumn(column);
@@ -2784,6 +2984,9 @@
             document.getElementById('total-serials').textContent = total;
             document.getElementById('unique-serials').textContent = unique;
             document.getElementById('duplicate-serials').textContent = duplicates;
+            
+            // Update charts if statistics panel is visible
+            updateCharts();
         }
 
         function highlightDuplicate(value) {
@@ -3158,6 +3361,339 @@
                 localStorage.setItem('notificationHistory', JSON.stringify(state.notificationHistory));
             }
         };
+
+        // Statistics and Charts Functions
+        function initializeCharts() {
+            if (!window.Chart) {
+                console.warn('Chart.js not loaded');
+                return;
+            }
+
+            // Bar Chart - Distribution by Column
+            const barCtx = document.getElementById('bar-chart');
+            if (barCtx) {
+                if (state.charts.barChart) {
+                    state.charts.barChart.destroy();
+                }
+                state.charts.barChart = new Chart(barCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: state.columns,
+                        datasets: [{
+                            label: 'Serials Count',
+                            data: state.columns.map(col => state.data[col].length),
+                            backgroundColor: [
+                                'rgba(37, 99, 235, 0.8)',
+                                'rgba(16, 185, 129, 0.8)',
+                                'rgba(245, 158, 11, 0.8)',
+                                'rgba(239, 68, 68, 0.8)'
+                            ],
+                            borderColor: [
+                                'rgba(37, 99, 235, 1)',
+                                'rgba(16, 185, 129, 1)',
+                                'rgba(245, 158, 11, 1)',
+                                'rgba(239, 68, 68, 1)'
+                            ],
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    color: '#94a3b8',
+                                    font: {
+                                        size: 12
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                }
+                            },
+                            x: {
+                                ticks: {
+                                    color: '#94a3b8',
+                                    font: {
+                                        size: 12
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Pie Chart - Proportion
+            const pieCtx = document.getElementById('pie-chart');
+            if (pieCtx) {
+                if (state.charts.pieChart) {
+                    state.charts.pieChart.destroy();
+                }
+                const total = state.columns.reduce((sum, col) => sum + state.data[col].length, 0);
+                state.charts.pieChart = new Chart(pieCtx, {
+                    type: 'pie',
+                    data: {
+                        labels: state.columns,
+                        datasets: [{
+                            data: state.columns.map(col => state.data[col].length),
+                            backgroundColor: [
+                                'rgba(37, 99, 235, 0.8)',
+                                'rgba(16, 185, 129, 0.8)',
+                                'rgba(245, 158, 11, 0.8)',
+                                'rgba(239, 68, 68, 0.8)'
+                            ],
+                            borderColor: [
+                                'rgba(37, 99, 235, 1)',
+                                'rgba(16, 185, 129, 1)',
+                                'rgba(245, 158, 11, 1)',
+                                'rgba(239, 68, 68, 1)'
+                            ],
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    color: '#94a3b8',
+                                    font: {
+                                        size: 12
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Line Chart - Trends
+            updateTrendsChart();
+        }
+
+        function updateTrendsChart() {
+            const lineCtx = document.getElementById('line-chart');
+            if (!lineCtx || !window.Chart) return;
+
+            // Get data based on period
+            const periodData = getTrendsData(state.statisticsPeriod);
+            
+            if (state.charts.lineChart) {
+                state.charts.lineChart.destroy();
+            }
+
+            state.charts.lineChart = new Chart(lineCtx, {
+                type: 'line',
+                data: {
+                    labels: periodData.labels,
+                    datasets: state.columns.map((col, idx) => ({
+                        label: col,
+                        data: periodData.data[col] || [],
+                        borderColor: [
+                            'rgba(37, 99, 235, 1)',
+                            'rgba(16, 185, 129, 1)',
+                            'rgba(245, 158, 11, 1)',
+                            'rgba(239, 68, 68, 1)'
+                        ][idx],
+                        backgroundColor: [
+                            'rgba(37, 99, 235, 0.1)',
+                            'rgba(16, 185, 129, 0.1)',
+                            'rgba(245, 158, 11, 0.1)',
+                            'rgba(239, 68, 68, 0.1)'
+                        ][idx],
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }))
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                color: '#94a3b8',
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                color: '#94a3b8',
+                                font: {
+                                    size: 12
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: '#94a3b8',
+                                font: {
+                                    size: 12
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function getTrendsData(period) {
+            const now = new Date();
+            const labels = [];
+            const data = {};
+
+            state.columns.forEach(col => {
+                data[col] = [];
+            });
+
+            if (period === 'day') {
+                // Last 24 hours by hour
+                for (let i = 23; i >= 0; i--) {
+                    const date = new Date(now);
+                    date.setHours(date.getHours() - i);
+                    date.setMinutes(0);
+                    date.setSeconds(0);
+                    date.setMilliseconds(0);
+                    
+                    const label = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                    labels.push(label);
+                    
+                    state.columns.forEach(col => {
+                        const count = state.data[col].filter(serial => {
+                            const serialDate = new Date(state.serialTimestamps[serial] || 0);
+                            return serialDate >= date && serialDate < new Date(date.getTime() + 3600000);
+                        }).length;
+                        data[col].push(count);
+                    });
+                }
+            } else if (period === 'week') {
+                // Last 7 days
+                for (let i = 6; i >= 0; i--) {
+                    const date = new Date(now);
+                    date.setDate(date.getDate() - i);
+                    date.setHours(0);
+                    date.setMinutes(0);
+                    date.setSeconds(0);
+                    date.setMilliseconds(0);
+                    
+                    const label = date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+                    labels.push(label);
+                    
+                    state.columns.forEach(col => {
+                        const count = state.data[col].filter(serial => {
+                            const serialDate = new Date(state.serialTimestamps[serial] || 0);
+                            const nextDay = new Date(date);
+                            nextDay.setDate(nextDay.getDate() + 1);
+                            return serialDate >= date && serialDate < nextDay;
+                        }).length;
+                        data[col].push(count);
+                    });
+                }
+            } else if (period === 'month') {
+                // Last 30 days
+                for (let i = 29; i >= 0; i--) {
+                    const date = new Date(now);
+                    date.setDate(date.getDate() - i);
+                    date.setHours(0);
+                    date.setMinutes(0);
+                    date.setSeconds(0);
+                    date.setMilliseconds(0);
+                    
+                    const label = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    labels.push(label);
+                    
+                    state.columns.forEach(col => {
+                        const count = state.data[col].filter(serial => {
+                            const serialDate = new Date(state.serialTimestamps[serial] || 0);
+                            const nextDay = new Date(date);
+                            nextDay.setDate(nextDay.getDate() + 1);
+                            return serialDate >= date && serialDate < nextDay;
+                        }).length;
+                        data[col].push(count);
+                    });
+                }
+            }
+
+            return { labels, data };
+        }
+
+        function updateCharts() {
+            if (document.getElementById('statistics-panel')?.classList.contains('active')) {
+                initializeCharts();
+            }
+        }
+
+        function exportStatisticsReport() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            let y = 20;
+
+            doc.setFontSize(16);
+            doc.text('SerialScan Pro - Statistics Report', 14, y);
+            y += 10;
+
+            doc.setFontSize(12);
+            doc.text(`Generated: ${new Date().toLocaleString()}`, 14, y);
+            y += 10;
+            doc.text(`Period: ${state.statisticsPeriod.charAt(0).toUpperCase() + state.statisticsPeriod.slice(1)}`, 14, y);
+            y += 15;
+
+            // Summary
+            doc.setFontSize(14);
+            doc.text('Summary', 14, y);
+            y += 8;
+            doc.setFontSize(12);
+            const total = state.columns.reduce((sum, col) => sum + state.data[col].length, 0);
+            doc.text(`Total Serials: ${total}`, 14, y);
+            y += 7;
+            doc.text(`Unique Serials: ${state.globalSet.size}`, 14, y);
+            y += 7;
+            doc.text(`Duplicates: ${state.data.DUPLICATES.length}`, 14, y);
+            y += 15;
+
+            // Distribution by Column
+            doc.setFontSize(14);
+            doc.text('Distribution by Column', 14, y);
+            y += 8;
+            doc.setFontSize(12);
+            state.columns.forEach(col => {
+                doc.text(`${col}: ${state.data[col].length}`, 14, y);
+                y += 7;
+                if (y > 280) {
+                    doc.addPage();
+                    y = 20;
+                }
+            });
+
+            doc.save(`statistics_report_${new Date().toISOString().split('T')[0]}.pdf`);
+            showToast('Statistics report exported successfully', 'success');
+            addToHistory('Exported statistics report', 'export');
+        }
 
         // Make functions available globally for onclick handlers
         window.removeSerial = removeSerial;
