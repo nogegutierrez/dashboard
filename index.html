@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SerialScan Pro | Serial Manager</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <!-- Firebase Config (external file, not in git) -->
+    <script src="firebase-config.js"></script>
     <style>
         :root {
             --primary: #2563eb;
@@ -62,7 +67,8 @@
         .sidebar.collapsed .user-info,
         .sidebar.collapsed .language-selector select,
         .sidebar.collapsed .user-name,
-        .sidebar.collapsed .user-role {
+        .sidebar.collapsed .user-role,
+        .sidebar.collapsed .change-password-btn {
             display: none;
         }
 
@@ -680,9 +686,331 @@
             background: var(--dark);
             color: var(--light);
         }
+
+        /* Login Screen */
+        .login-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            padding: 2rem;
+        }
+
+        .login-card {
+            background: rgba(30, 41, 59, 0.9);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 3rem;
+            width: 100%;
+            max-width: 400px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .login-logo {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.8rem;
+            margin: 0 auto 1rem;
+        }
+
+        .login-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--light), #cbd5e1);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .login-subtitle {
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-label {
+            color: var(--light);
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .form-input {
+            padding: 0.9rem 1rem;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: var(--light);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .form-input::placeholder {
+            color: #64748b;
+        }
+
+        .login-error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--danger);
+            color: var(--danger);
+            padding: 0.8rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            display: none;
+        }
+
+        .login-error.show {
+            display: block;
+        }
+
+        .login-btn {
+            padding: 1rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .login-btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+
+        .login-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Change Password Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal {
+            background: rgba(30, 41, 59, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 2rem;
+            width: 90%;
+            max-width: 450px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--light);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+
+        .modal-close:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .modal-body {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        /* Hide main content when not authenticated */
+        body.not-authenticated .main-content,
+        body.not-authenticated .sidebar {
+            display: none;
+        }
+
+        body.authenticated .login-container {
+            display: none;
+        }
+
+        .change-password-btn {
+            padding: 0.5rem 1rem;
+            background: rgba(37, 99, 235, 0.2);
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .change-password-btn:hover {
+            background: rgba(37, 99, 235, 0.3);
+        }
     </style>
 </head>
-<body>
+<body class="not-authenticated">
+    <!-- Login Screen -->
+    <div class="login-container" id="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="login-logo">SS</div>
+                <h1 class="login-title">SerialScan Pro</h1>
+                <p class="login-subtitle">Sign in to continue</p>
+            </div>
+            <div class="login-error" id="login-error"></div>
+            <form class="login-form" id="login-form">
+                <div class="form-group">
+                    <label class="form-label" for="login-email">Email</label>
+                    <input 
+                        type="email" 
+                        id="login-email" 
+                        class="form-input" 
+                        placeholder="your@email.com" 
+                        required 
+                        autocomplete="email"
+                    >
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="login-password">Password</label>
+                    <input 
+                        type="password" 
+                        id="login-password" 
+                        class="form-input" 
+                        placeholder="••••••••" 
+                        required 
+                        autocomplete="current-password"
+                    >
+                </div>
+                <button type="submit" class="login-btn" id="login-btn">
+                    <i class="fas fa-sign-in-alt"></i>
+                    <span>Sign In</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div class="modal-overlay" id="change-password-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title" data-i18n="modal.changePassword">Change Password</h2>
+                <button class="modal-close" id="close-change-password-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="login-error" id="change-password-error"></div>
+                <form id="change-password-form">
+                    <div class="form-group">
+                        <label class="form-label" for="current-password" data-i18n="modal.currentPassword">Current Password</label>
+                        <input 
+                            type="password" 
+                            id="current-password" 
+                            class="form-input" 
+                            placeholder="••••••••" 
+                            required 
+                            autocomplete="current-password"
+                        >
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="new-password" data-i18n="modal.newPassword">New Password</label>
+                        <input 
+                            type="password" 
+                            id="new-password" 
+                            class="form-input" 
+                            placeholder="••••••••" 
+                            required 
+                            autocomplete="new-password"
+                            minlength="6"
+                        >
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="confirm-password" data-i18n="modal.confirmPassword">Confirm New Password</label>
+                        <input 
+                            type="password" 
+                            id="confirm-password" 
+                            class="form-input" 
+                            placeholder="••••••••" 
+                            required 
+                            autocomplete="new-password"
+                        >
+                    </div>
+                    <button type="submit" class="login-btn" id="change-password-btn">
+                        <i class="fas fa-key"></i>
+                        <span data-i18n="modal.updatePassword">Update Password</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Sidebar -->
     <div class="sidebar collapsed" id="sidebar">
         <button class="sidebar-toggle" id="sidebar-toggle" title="Toggle Sidebar">
@@ -729,12 +1057,20 @@
                 </select>
             </div>
             <div class="user-profile">
-                <div class="user-avatar">SS</div>
+                <div class="user-avatar" id="user-avatar">SS</div>
                 <div class="user-info">
-                    <div class="user-name">SerialScan Pro</div>
+                    <div class="user-name" id="user-name">SerialScan Pro</div>
                     <div class="user-role" data-i18n="user.role">Serial Scanner</div>
+                    <button class="change-password-btn" id="change-password-trigger">
+                        <i class="fas fa-key"></i>
+                        <span data-i18n="button.changePassword">Change Password</span>
+                    </button>
                 </div>
             </div>
+            <a href="#" class="nav-item" id="logout-btn">
+                <i class="fas fa-sign-out-alt"></i>
+                <span class="nav-text" data-i18n="nav.logout">Logout</span>
+            </a>
         </div>
     </div>
 
@@ -982,7 +1318,8 @@
                     statistics: 'Statistics',
                     settings: 'Settings',
                     team: 'Team',
-                    support: 'Support'
+                    support: 'Support',
+                    logout: 'Logout'
                 },
                 user: {
                     role: 'Serial Scanner'
@@ -1010,7 +1347,19 @@
                     select: 'Select',
                     copy: 'Copy',
                     clear: 'Clear',
-                    remove: 'Remove'
+                    remove: 'Remove',
+                    changePassword: 'Change Password'
+                },
+                modal: {
+                    changePassword: 'Change Password',
+                    currentPassword: 'Current Password',
+                    newPassword: 'New Password',
+                    confirmPassword: 'Confirm New Password',
+                    updatePassword: 'Update Password',
+                    passwordChanged: 'Password changed successfully',
+                    passwordMismatch: 'Passwords do not match',
+                    weakPassword: 'Password should be at least 6 characters',
+                    wrongPassword: 'Wrong current password'
                 },
                 empty: {
                     noSerials: 'No scanned serials'
@@ -1042,7 +1391,8 @@
                     statistics: 'Estadísticas',
                     settings: 'Configuración',
                     team: 'Equipo',
-                    support: 'Soporte'
+                    support: 'Soporte',
+                    logout: 'Cerrar Sesión'
                 },
                 user: {
                     role: 'Escáner de Seriales'
@@ -1070,7 +1420,19 @@
                     select: 'Seleccionar',
                     copy: 'Copiar',
                     clear: 'Limpiar',
-                    remove: 'Eliminar'
+                    remove: 'Eliminar',
+                    changePassword: 'Cambiar Contraseña'
+                },
+                modal: {
+                    changePassword: 'Cambiar Contraseña',
+                    currentPassword: 'Contraseña Actual',
+                    newPassword: 'Nueva Contraseña',
+                    confirmPassword: 'Confirmar Nueva Contraseña',
+                    updatePassword: 'Actualizar Contraseña',
+                    passwordChanged: 'Contraseña cambiada exitosamente',
+                    passwordMismatch: 'Las contraseñas no coinciden',
+                    weakPassword: 'La contraseña debe tener al menos 6 caracteres',
+                    wrongPassword: 'Contraseña actual incorrecta'
                 },
                 empty: {
                     noSerials: 'No hay seriales escaneados'
@@ -1290,9 +1652,238 @@
             saveDataToStorage();
         }
 
+        // Firebase Configuration is loaded from external file: firebase-config.js
+        // This file is in .gitignore to keep credentials private
+        // Initialize Firebase
+        let auth = null;
+        if (typeof firebaseConfig !== 'undefined' && firebaseConfig && firebaseConfig.apiKey && firebaseConfig.apiKey !== "YOUR_API_KEY") {
+            try {
+                firebase.initializeApp(firebaseConfig);
+                auth = firebase.auth();
+            } catch (error) {
+                console.error('Firebase initialization error:', error);
+            }
+        }
+
+        // Authentication Functions
+        function showError(elementId, message) {
+            const errorElement = document.getElementById(elementId);
+            if (errorElement) {
+                errorElement.textContent = message;
+                errorElement.classList.add('show');
+                setTimeout(() => {
+                    errorElement.classList.remove('show');
+                }, 5000);
+            }
+        }
+
+        function hideError(elementId) {
+            const errorElement = document.getElementById(elementId);
+            if (errorElement) {
+                errorElement.classList.remove('show');
+            }
+        }
+
+        function setAuthenticated(user) {
+            document.body.classList.remove('not-authenticated');
+            document.body.classList.add('authenticated');
+            
+            // Update user info in sidebar
+            if (user && user.email) {
+                const emailParts = user.email.split('@');
+                const userName = emailParts[0];
+                const initials = userName.substring(0, 2).toUpperCase();
+                
+                document.getElementById('user-avatar').textContent = initials;
+                document.getElementById('user-name').textContent = userName;
+            }
+            
+            // Initialize app after authentication
+            initializeApp();
+        }
+
+        function setUnauthenticated() {
+            document.body.classList.remove('authenticated');
+            document.body.classList.add('not-authenticated');
+            
+            // Clear all data when logging out
+            state.data = {
+                ONT: [],
+                EEROS: [],
+                STB: [],
+                STICKS: [],
+                DUPLICATES: []
+            };
+            state.globalSet.clear();
+            state.duplicatesMap.clear();
+        }
+
+        // Login handler
+        async function handleLogin(e) {
+            e.preventDefault();
+            hideError('login-error');
+            
+            const email = document.getElementById('login-email').value.trim();
+            const password = document.getElementById('login-password').value;
+            const loginBtn = document.getElementById('login-btn');
+            
+            if (!auth) {
+                showError('login-error', 'Firebase not configured. Please create firebase-config.js file with your credentials. See firebase-config.js.example');
+                return;
+            }
+            
+            loginBtn.disabled = true;
+            loginBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Signing in...`;
+            
+            try {
+                const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                setAuthenticated(userCredential.user);
+                showToast('Successfully signed in', 'success');
+            } catch (error) {
+                let errorMessage = 'Wrong password';
+                if (error.code === 'auth/user-not-found') {
+                    errorMessage = 'User not found';
+                } else if (error.code === 'auth/wrong-password') {
+                    errorMessage = 'Wrong password';
+                } else if (error.code === 'auth/invalid-email') {
+                    errorMessage = 'Invalid email address';
+                } else if (error.code === 'auth/too-many-requests') {
+                    errorMessage = 'Too many failed attempts. Please try again later';
+                }
+                showError('login-error', errorMessage);
+            } finally {
+                loginBtn.disabled = false;
+                loginBtn.innerHTML = `<i class="fas fa-sign-in-alt"></i> Sign In`;
+            }
+        }
+
+        // Logout handler
+        async function handleLogout() {
+            if (auth) {
+                try {
+                    await auth.signOut();
+                } catch (error) {
+                    console.error('Logout error:', error);
+                }
+            }
+            
+            setUnauthenticated();
+            document.getElementById('login-email').value = '';
+            document.getElementById('login-password').value = '';
+            showToast('Successfully signed out', 'success');
+        }
+
+        // Change Password Modal Functions
+        function showChangePasswordModal() {
+            document.getElementById('change-password-modal').classList.add('show');
+            hideError('change-password-error');
+            document.getElementById('change-password-form').reset();
+        }
+
+        function hideChangePasswordModal() {
+            document.getElementById('change-password-modal').classList.remove('show');
+            document.getElementById('change-password-form').reset();
+            hideError('change-password-error');
+        }
+
+        // Change Password handler
+        async function handleChangePassword(e) {
+            e.preventDefault();
+            hideError('change-password-error');
+            
+            const currentPassword = document.getElementById('current-password').value;
+            const newPassword = document.getElementById('new-password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+            const changePasswordBtn = document.getElementById('change-password-btn');
+            
+            // Validate passwords match
+            if (newPassword !== confirmPassword) {
+                showError('change-password-error', t('modal.passwordMismatch'));
+                return;
+            }
+            
+            // Validate password length
+            if (newPassword.length < 6) {
+                showError('change-password-error', t('modal.weakPassword'));
+                return;
+            }
+            
+            if (!auth || !auth.currentUser) {
+                showError('change-password-error', 'User not authenticated');
+                return;
+            }
+            
+            changePasswordBtn.disabled = true;
+            changePasswordBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${t('modal.updatePassword')}`;
+            
+            try {
+                // Re-authenticate user with current password
+                const credential = firebase.auth.EmailAuthProvider.credential(
+                    auth.currentUser.email,
+                    currentPassword
+                );
+                
+                await auth.currentUser.reauthenticateWithCredential(credential);
+                
+                // Update password
+                await auth.currentUser.updatePassword(newPassword);
+                
+                showToast(t('modal.passwordChanged'), 'success');
+                hideChangePasswordModal();
+            } catch (error) {
+                let errorMessage = t('modal.wrongPassword');
+                if (error.code === 'auth/wrong-password') {
+                    errorMessage = t('modal.wrongPassword');
+                } else if (error.code === 'auth/weak-password') {
+                    errorMessage = t('modal.weakPassword');
+                } else if (error.code === 'auth/requires-recent-login') {
+                    errorMessage = 'Please log out and log back in before changing password';
+                }
+                showError('change-password-error', errorMessage);
+            } finally {
+                changePasswordBtn.disabled = false;
+                changePasswordBtn.innerHTML = `<i class="fas fa-key"></i> ${t('modal.updatePassword')}`;
+            }
+        }
+
+        // Check authentication state
+        function checkAuthState() {
+            if (!auth) {
+                // If Firebase is not configured, show error
+                showError('login-error', 'Firebase not configured. Please create firebase-config.js file with your credentials. See firebase-config.js.example');
+                return;
+            }
+            
+            auth.onAuthStateChanged((user) => {
+                if (user) {
+                    setAuthenticated(user);
+                } else {
+                    setUnauthenticated();
+                }
+            });
+        }
+
         // Initialize the application
         document.addEventListener('DOMContentLoaded', function() {
-            initializeApp();
+            // Set up auth event listeners
+            document.getElementById('login-form').addEventListener('submit', handleLogin);
+            document.getElementById('logout-btn').addEventListener('click', (e) => {
+                e.preventDefault();
+                handleLogout();
+            });
+            document.getElementById('change-password-trigger').addEventListener('click', showChangePasswordModal);
+            document.getElementById('close-change-password-modal').addEventListener('click', hideChangePasswordModal);
+            document.getElementById('change-password-form').addEventListener('submit', handleChangePassword);
+            
+            // Close modal when clicking overlay
+            document.getElementById('change-password-modal').addEventListener('click', (e) => {
+                if (e.target.id === 'change-password-modal') {
+                    hideChangePasswordModal();
+                }
+            });
+            
+            // Check authentication state
+            checkAuthState();
         });
 
         function initializeApp() {

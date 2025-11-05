@@ -1,0 +1,16 @@
+// Firebase Configuration
+// IMPORTANT: 
+// 1. Rename this file to firebase-config.js
+// 2. Replace the placeholder values with your actual Firebase credentials
+// 3. Add firebase-config.js to .gitignore to keep it private
+// 4. DO NOT commit firebase-config.js to GitHub
+
+const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_PROJECT_ID.appspot.com",
+    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+    appId: "YOUR_APP_ID"
+};
+

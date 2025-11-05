@@ -30,3 +30,6 @@ build/
 *.tmp
 *.temp
 
+# Firebase Configuration (contains sensitive credentials)
+firebase-config.js
+
