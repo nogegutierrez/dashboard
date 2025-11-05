@@ -8,6 +8,11 @@
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <!-- External Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
     <style>
         :root {
             --primary: #2563eb;
@@ -911,6 +916,252 @@
         .change-password-btn:hover {
             background: rgba(37, 99, 235, 0.3);
         }
+
+        /* Theme Toggle */
+        .theme-toggle {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 1001;
+            background: rgba(30, 41, 59, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50px;
+            padding: 0.5rem 1rem;
+            color: var(--light);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .theme-toggle:hover {
+            background: rgba(30, 41, 59, 1);
+        }
+
+        /* Light Theme */
+        body.light-theme {
+            background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+            color: var(--darker);
+        }
+
+        body.light-theme .sidebar,
+        body.light-theme .stat-card,
+        body.light-theme .scanner-container,
+        body.light-theme .column-card,
+        body.light-theme .modal,
+        body.light-theme .login-card {
+            background: rgba(255, 255, 255, 0.95);
+            color: var(--darker);
+        }
+
+        body.light-theme .nav-item,
+        body.light-theme .stat-label,
+        body.light-theme .empty-state {
+            color: #64748b;
+        }
+
+        /* Search Bar */
+        .search-container {
+            background: rgba(30, 41, 59, 0.7);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 0.8rem 1rem;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: var(--light);
+            font-size: 1rem;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        /* History Panel */
+        .history-panel {
+            background: rgba(30, 41, 59, 0.7);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            padding: 0.8rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .history-item:last-child {
+            border-bottom: none;
+        }
+
+        /* Statistics Charts */
+        .charts-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-card {
+            background: rgba(30, 41, 59, 0.7);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Drag and Drop */
+        .serial-item.dragging {
+            opacity: 0.5;
+            cursor: grabbing;
+        }
+
+        .column-card.drag-over {
+            border-color: var(--primary);
+            background: rgba(37, 99, 235, 0.1);
+        }
+
+        /* QR Scanner */
+        .qr-scanner-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 3000;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .qr-scanner-container.active {
+            display: flex;
+        }
+
+        .qr-video {
+            max-width: 90%;
+            max-height: 70vh;
+            border: 2px solid var(--primary);
+            border-radius: 8px;
+        }
+
+        /* Print Styles */
+        @media print {
+            .sidebar, .header-actions, .btn, .sidebar-toggle, .theme-toggle {
+                display: none !important;
+            }
+            .main-content {
+                margin-left: 0 !important;
+                padding: 1rem !important;
+            }
+            .column-card {
+                page-break-inside: avoid;
+            }
+        }
+
+        /* Presentation Mode */
+        body.presentation-mode {
+            overflow: hidden;
+        }
+
+        body.presentation-mode .sidebar,
+        body.presentation-mode .header-actions,
+        body.presentation-mode .btn,
+        body.presentation-mode .theme-toggle {
+            display: none !important;
+        }
+
+        body.presentation-mode .main-content {
+            margin-left: 0 !important;
+            padding: 2rem !important;
+        }
+
+        body.presentation-mode .stats-container {
+            grid-template-columns: repeat(4, 1fr);
+        }
+
+        body.presentation-mode .stat-value {
+            font-size: 4rem;
+        }
+
+        /* Tags */
+        .tag {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            background: var(--primary);
+            color: white;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            margin: 0.2rem;
+        }
+
+        /* Import/Export Drop Zone */
+        .drop-zone {
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .drop-zone.drag-over {
+            border-color: var(--primary);
+            background: rgba(37, 99, 235, 0.1);
+        }
+
+        /* Notification History */
+        .notification-history {
+            position: fixed;
+            bottom: 2rem;
+            left: 2rem;
+            z-index: 1000;
+            max-width: 300px;
+            max-height: 400px;
+            overflow-y: auto;
+            background: rgba(30, 41, 59, 0.95);
+            border-radius: 8px;
+            padding: 1rem;
+            display: none;
+        }
+
+        .notification-history.active {
+            display: block;
+        }
+
+        /* Offline Indicator */
+        .offline-indicator {
+            position: fixed;
+            top: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--warning);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            z-index: 2000;
+            display: none;
+        }
+
+        .offline-indicator.active {
+            display: block;
+        }
     </style>
 </head>
 <body class="not-authenticated">
@@ -1087,15 +1338,60 @@
                     <div class="status-dot"></div>
                     <span data-i18n="scanner.active">Scanner Active</span>
                 </div>
+                <button class="btn btn-outline" id="search-toggle">
+                    <i class="fas fa-search"></i>
+                    <span data-i18n="button.search">Search</span>
+                </button>
                 <button class="btn btn-outline" id="export-csv">
                     <i class="fas fa-download"></i>
                     <span data-i18n="button.export">Export CSV</span>
+                </button>
+                <button class="btn btn-outline" id="export-excel">
+                    <i class="fas fa-file-excel"></i>
+                    <span data-i18n="button.exportExcel">Export Excel</span>
+                </button>
+                <button class="btn btn-outline" id="export-pdf">
+                    <i class="fas fa-file-pdf"></i>
+                    <span data-i18n="button.exportPDF">Export PDF</span>
+                </button>
+                <button class="btn btn-outline" id="import-data">
+                    <i class="fas fa-upload"></i>
+                    <span data-i18n="button.import">Import</span>
+                </button>
+                <button class="btn btn-outline" id="presentation-mode">
+                    <i class="fas fa-tv"></i>
+                    <span data-i18n="button.presentation">Presentation</span>
+                </button>
+                <button class="btn btn-outline" id="print">
+                    <i class="fas fa-print"></i>
+                    <span data-i18n="button.print">Print</span>
                 </button>
                 <button class="btn btn-primary" id="refresh">
                     <i class="fas fa-sync"></i>
                     <span data-i18n="button.refresh">Refresh</span>
                 </button>
             </div>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="search-container" id="search-container" style="display: none;">
+            <i class="fas fa-search"></i>
+            <input type="text" class="search-input" id="search-input" placeholder="Search serials...">
+            <button class="btn btn-outline" id="clear-search">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <!-- History Panel -->
+        <div class="history-panel" id="history-panel" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3 data-i18n="history.title">Action History</h3>
+                <button class="btn btn-outline" id="clear-history">
+                    <i class="fas fa-trash"></i>
+                    <span data-i18n="button.clearHistory">Clear History</span>
+                </button>
+            </div>
+            <div id="history-list"></div>
         </div>
 
         <!-- Stats Cards -->
@@ -1303,8 +1599,34 @@
     <!-- Toast Container -->
     <div class="toast-container" id="toast-container"></div>
 
+    <!-- Theme Toggle -->
+    <button class="theme-toggle" id="theme-toggle" title="Toggle Theme">
+        <i class="fas fa-moon" id="theme-icon"></i>
+    </button>
+
+    <!-- QR Scanner -->
+    <div class="qr-scanner-container" id="qr-scanner">
+        <video id="qr-video" class="qr-video" autoplay playsinline></video>
+        <canvas id="qr-canvas" style="display: none;"></canvas>
+        <div style="margin-top: 1rem; display: flex; gap: 1rem;">
+            <button class="btn btn-primary" id="close-qr-scanner">
+                <i class="fas fa-times"></i>
+                <span>Close</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Offline Indicator -->
+    <div class="offline-indicator" id="offline-indicator">
+        <i class="fas fa-wifi"></i>
+        <span>Offline Mode</span>
+    </div>
+
     <!-- Hidden Scanner Input -->
     <input type="text" id="hidden-scanner-input" class="hidden-input" autofocus>
+    
+    <!-- Hidden File Input for Import -->
+    <input type="file" id="file-input" accept=".csv,.xlsx,.xls" style="display: none;">
 
     <script>
         // Translations
@@ -1339,6 +1661,13 @@
                 },
                 button: {
                     export: 'Export CSV',
+                    exportExcel: 'Export Excel',
+                    exportPDF: 'Export PDF',
+                    import: 'Import',
+                    search: 'Search',
+                    print: 'Print',
+                    presentation: 'Presentation',
+                    clearHistory: 'Clear History',
                     refresh: 'Refresh',
                     forceFocus: 'Force Focus',
                     clearAll: 'Clear All',
@@ -1347,6 +1676,9 @@
                     clear: 'Clear',
                     remove: 'Remove',
                     changePassword: 'Change Password'
+                },
+                history: {
+                    title: 'Action History'
                 },
                 modal: {
                     changePassword: 'Change Password',
@@ -1412,6 +1744,13 @@
                 },
                 button: {
                     export: 'Exportar CSV',
+                    exportExcel: 'Exportar Excel',
+                    exportPDF: 'Exportar PDF',
+                    import: 'Importar',
+                    search: 'Buscar',
+                    print: 'Imprimir',
+                    presentation: 'Presentación',
+                    clearHistory: 'Limpiar Historial',
                     refresh: 'Actualizar',
                     forceFocus: 'Forzar Foco',
                     clearAll: 'Limpiar Todo',
@@ -1420,6 +1759,9 @@
                     clear: 'Limpiar',
                     remove: 'Eliminar',
                     changePassword: 'Cambiar Contraseña'
+                },
+                history: {
+                    title: 'Historial de Acciones'
                 },
                 modal: {
                     changePassword: 'Cambiar Contraseña',
@@ -1473,7 +1815,16 @@
             buffer: '',
             timer: null,
             PAUSE_MS: 700,
-            currentLanguage: localStorage.getItem('language') || 'en'
+            currentLanguage: localStorage.getItem('language') || 'en',
+            history: JSON.parse(localStorage.getItem('serialScanHistory') || '[]'),
+            searchQuery: '',
+            theme: localStorage.getItem('theme') || 'dark',
+            validationPatterns: JSON.parse(localStorage.getItem('validationPatterns') || '{}'),
+            tags: JSON.parse(localStorage.getItem('serialScanTags') || '{}'),
+            notificationHistory: JSON.parse(localStorage.getItem('notificationHistory') || '[]'),
+            charts: {},
+            isOffline: !navigator.onLine,
+            presentationMode: false
         };
 
         // Translation function
@@ -1914,6 +2265,21 @@
             document.getElementById('language-select').value = state.currentLanguage;
             updateTranslations();
             
+            // Apply theme
+            if (state.theme === 'light') {
+                document.body.classList.add('light-theme');
+                document.getElementById('theme-icon').className = 'fas fa-sun';
+            } else {
+                document.body.classList.remove('light-theme');
+                document.getElementById('theme-icon').className = 'fas fa-moon';
+            }
+            
+            // Initialize offline status
+            updateOfflineStatus();
+            
+            // Render history
+            renderHistory();
+            
             // Render all columns with loaded data
             state.columns.forEach(column => {
                 renderColumn(column);
@@ -1951,6 +2317,13 @@
             } else {
                 showToast(t('toast.appReady', { column: state.activeColumn }), 'success');
             }
+            
+            // Make serial items draggable
+            setTimeout(() => {
+                document.querySelectorAll('.serial-item').forEach(item => {
+                    item.draggable = true;
+                });
+            }, 100);
         }
 
         function setupEventListeners() {
@@ -1983,6 +2356,79 @@
             
             // Mobile menu toggle
             document.querySelector('.menu-toggle').addEventListener('click', toggleMobileMenu);
+            
+            // Export buttons
+            document.getElementById('export-csv').addEventListener('click', exportToCSV);
+            document.getElementById('export-excel').addEventListener('click', exportToExcel);
+            document.getElementById('export-pdf').addEventListener('click', exportToPDF);
+            
+            // Import button
+            document.getElementById('import-data').addEventListener('click', () => {
+                document.getElementById('file-input').click();
+            });
+            document.getElementById('file-input').addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    importData(e.target.files[0]);
+                }
+            });
+            
+            // Search
+            document.getElementById('search-toggle').addEventListener('click', () => {
+                const container = document.getElementById('search-container');
+                container.style.display = container.style.display === 'none' ? 'flex' : 'none';
+                if (container.style.display === 'flex') {
+                    document.getElementById('search-input').focus();
+                }
+            });
+            document.getElementById('search-input').addEventListener('input', (e) => {
+                performSearch(e.target.value);
+            });
+            document.getElementById('clear-search').addEventListener('click', () => {
+                document.getElementById('search-input').value = '';
+                performSearch('');
+            });
+            
+            // History
+            document.querySelectorAll('.nav-item').forEach(item => {
+                if (item.textContent.includes('History') || item.getAttribute('data-i18n') === 'nav.history') {
+                    item.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const panel = document.getElementById('history-panel');
+                        panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+                    });
+                }
+            });
+            document.getElementById('clear-history').addEventListener('click', () => {
+                state.history = [];
+                localStorage.setItem('serialScanHistory', JSON.stringify([]));
+                renderHistory();
+            });
+            
+            // Theme toggle
+            document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
+            
+            // Presentation mode
+            document.getElementById('presentation-mode').addEventListener('click', togglePresentationMode);
+            
+            // Print
+            document.getElementById('print').addEventListener('click', printData);
+            
+            // QR Scanner
+            document.querySelector('.nav-item[data-i18n="nav.scanner"]')?.addEventListener('click', (e) => {
+                e.preventDefault();
+                startQRScanner();
+            });
+            document.getElementById('close-qr-scanner').addEventListener('click', stopQRScanner);
+            
+            // Offline detection
+            window.addEventListener('online', updateOfflineStatus);
+            window.addEventListener('offline', updateOfflineStatus);
+            
+            // Keyboard shortcuts
+            setupKeyboardShortcuts();
+            
+            // Drag and drop for serials
+            setupDragAndDrop();
         }
 
         function toggleSidebar() {
@@ -2056,6 +2502,9 @@
             const value = rawValue.trim();
             if (!value) return;
             
+            // Add to history
+            addToHistory(`Scanned: ${value}`, 'info');
+            
             // Check if duplicate
             if (state.globalSet.has(value)) {
                 // Duplicate detected - register in DUPLICATES column with count
@@ -2081,6 +2530,7 @@
                 updateStats();
                 autoSave(); // Save to localStorage
                 showToast(t('toast.duplicateDetected', { value: value }), 'error');
+                addToHistory(`Duplicate detected: ${value}`, 'error');
                 playBeep();
                 return;
             }
@@ -2092,6 +2542,7 @@
             updateStats();
             autoSave(); // Save to localStorage
             showToast(t('toast.addedTo', { column: state.activeColumn, value: value }), 'success');
+            addToHistory(`Added ${value} to ${state.activeColumn}`, 'success');
             
             // Highlight new item
             const columnElement = document.getElementById(`list-${state.activeColumn}`);
@@ -2103,6 +2554,82 @@
                     lastItem.style.background = '';
                 }, 1000);
             }
+        }
+
+        // Drag and Drop functionality
+        function setupDragAndDrop() {
+            let draggedElement = null;
+            let draggedColumn = null;
+            let draggedIndex = null;
+            
+            document.addEventListener('dragstart', (e) => {
+                if (e.target.closest('.serial-item')) {
+                    draggedElement = e.target.closest('.serial-item');
+                    draggedColumn = draggedElement.closest('.column-content').id.replace('list-', '');
+                    const items = Array.from(draggedElement.parentElement.children);
+                    draggedIndex = items.indexOf(draggedElement);
+                    draggedElement.classList.add('dragging');
+                    e.dataTransfer.effectAllowed = 'move';
+                }
+            });
+            
+            document.addEventListener('dragend', (e) => {
+                if (draggedElement) {
+                    draggedElement.classList.remove('dragging');
+                    document.querySelectorAll('.column-card').forEach(card => {
+                        card.classList.remove('drag-over');
+                    });
+                    draggedElement = null;
+                    draggedColumn = null;
+                    draggedIndex = null;
+                }
+            });
+            
+            document.querySelectorAll('.column-content').forEach(container => {
+                container.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                    const columnCard = container.closest('.column-card');
+                    if (columnCard && columnCard.id !== `col-${draggedColumn}`) {
+                        columnCard.classList.add('drag-over');
+                    }
+                });
+                
+                container.addEventListener('dragleave', (e) => {
+                    e.currentTarget.closest('.column-card').classList.remove('drag-over');
+                });
+                
+                container.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    const targetColumn = container.id.replace('list-', '');
+                    const columnCard = container.closest('.column-card');
+                    columnCard.classList.remove('drag-over');
+                    
+                    if (draggedElement && draggedColumn && draggedColumn !== targetColumn && targetColumn !== 'DUPLICATES') {
+                        const serial = state.data[draggedColumn][draggedIndex];
+                        if (serial && !state.globalSet.has(serial)) {
+                            state.data[draggedColumn].splice(draggedIndex, 1);
+                            state.data[targetColumn].push(serial);
+                            renderColumn(draggedColumn);
+                            renderColumn(targetColumn);
+                            updateStats();
+                            autoSave();
+                            addToHistory(`Moved ${serial} from ${draggedColumn} to ${targetColumn}`, 'info');
+                            showToast(`Moved ${serial} to ${targetColumn}`, 'success');
+                        }
+                    }
+                });
+            });
+            
+            // Make serial items draggable
+            document.addEventListener('DOMContentLoaded', () => {
+                const observer = new MutationObserver(() => {
+                    document.querySelectorAll('.serial-item').forEach(item => {
+                        item.draggable = true;
+                    });
+                });
+                observer.observe(document.body, { childList: true, subtree: true });
+            });
         }
 
         function setActiveColumn(column) {
@@ -2158,6 +2685,7 @@
             updateStats();
             autoSave(); // Save to localStorage
             showToast(t('toast.columnCleared', { column: column }), 'success');
+            addToHistory(`Cleared ${column} column`, 'info');
         }
 
         function clearAllData() {
@@ -2177,6 +2705,7 @@
             updateStats();
             autoSave(); // Save to localStorage
             showToast(t('toast.allCleared'), 'success');
+            addToHistory('Cleared all data', 'info');
         }
 
         function renderColumn(column) {
@@ -2205,6 +2734,7 @@
             data.forEach((serial, index) => {
                 const item = document.createElement('div');
                 item.className = 'serial-item';
+                item.draggable = true;
                 const removeText = t('button.remove') || 'Remove';
                 item.innerHTML = `
                     <span>${serial}</span>
@@ -2241,6 +2771,7 @@
             updateStats();
             autoSave(); // Save to localStorage
             showToast(t('toast.serialRemoved', { value: serial }), 'success');
+            addToHistory(`Removed ${serial} from ${column}`, 'info');
         }
 
         function updateStats() {
@@ -2319,8 +2850,325 @@
             document.querySelector('.sidebar').classList.toggle('mobile-open');
         }
 
+        // Export to CSV
+        function exportToCSV() {
+            const rows = [];
+            const maxLength = Math.max(...state.columns.map(col => state.data[col].length), state.data.DUPLICATES.length);
+            
+            // Header
+            rows.push(['ONT', 'EEROS', 'STB', 'STICKS', 'DUPLICATES'].join(','));
+            
+            // Data rows
+            for (let i = 0; i < maxLength; i++) {
+                const row = state.columns.map(col => state.data[col][i] || '').concat(state.data.DUPLICATES[i] || '');
+                rows.push(row.join(','));
+            }
+            
+            const csv = rows.join('\n');
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `serialScan_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+            showToast('CSV exported successfully', 'success');
+            addToHistory('Exported data to CSV', 'export');
+        }
+
+        // Export to Excel
+        function exportToExcel() {
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet([
+                ['ONT', 'EEROS', 'STB', 'STICKS', 'DUPLICATES'],
+                ...Array(Math.max(...state.columns.map(col => state.data[col].length), state.data.DUPLICATES.length))
+                    .fill(0)
+                    .map((_, i) => state.columns.map(col => state.data[col][i] || '').concat(state.data.DUPLICATES[i] || ''))
+            ]);
+            XLSX.utils.book_append_sheet(wb, ws, 'Serials');
+            XLSX.writeFile(wb, `serialScan_${new Date().toISOString().split('T')[0]}.xlsx`);
+            showToast('Excel exported successfully', 'success');
+            addToHistory('Exported data to Excel', 'export');
+        }
+
+        // Export to PDF
+        function exportToPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            let y = 20;
+            
+            doc.setFontSize(16);
+            doc.text('SerialScan Pro - Export', 14, y);
+            y += 10;
+            
+            doc.setFontSize(12);
+            state.columns.forEach(col => {
+                if (state.data[col].length > 0) {
+                    doc.text(`${col}:`, 14, y);
+                    y += 7;
+                    state.data[col].forEach(serial => {
+                        doc.text(`  ${serial}`, 14, y);
+                        y += 7;
+                        if (y > 280) {
+                            doc.addPage();
+                            y = 20;
+                        }
+                    });
+                    y += 5;
+                }
+            });
+            
+            if (state.data.DUPLICATES.length > 0) {
+                doc.text('DUPLICATES:', 14, y);
+                y += 7;
+                state.data.DUPLICATES.forEach(dup => {
+                    doc.text(`  ${dup}`, 14, y);
+                    y += 7;
+                    if (y > 280) {
+                        doc.addPage();
+                        y = 20;
+                    }
+                });
+            }
+            
+            doc.save(`serialScan_${new Date().toISOString().split('T')[0]}.pdf`);
+            showToast('PDF exported successfully', 'success');
+            addToHistory('Exported data to PDF', 'export');
+        }
+
+        // Search functionality
+        function performSearch(query) {
+            state.searchQuery = query.toLowerCase();
+            if (!query) {
+                document.querySelectorAll('.serial-item').forEach(item => {
+                    item.style.display = '';
+                    item.classList.remove('highlight');
+                });
+                return;
+            }
+            
+            document.querySelectorAll('.serial-item').forEach(item => {
+                const serial = item.querySelector('span').textContent.toLowerCase();
+                if (serial.includes(state.searchQuery)) {
+                    item.style.display = '';
+                    item.classList.add('highlight');
+                    item.style.background = 'rgba(37, 99, 235, 0.3)';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+
+        // History management
+        function addToHistory(action, type = 'info') {
+            const historyItem = {
+                action,
+                type,
+                timestamp: new Date().toISOString(),
+                time: new Date().toLocaleTimeString()
+            };
+            state.history.unshift(historyItem);
+            if (state.history.length > 100) state.history.pop();
+            localStorage.setItem('serialScanHistory', JSON.stringify(state.history));
+            renderHistory();
+        }
+
+        function renderHistory() {
+            const container = document.getElementById('history-list');
+            if (!container) return;
+            
+            container.innerHTML = state.history.length === 0 
+                ? '<p style="text-align: center; color: #64748b; padding: 2rem;">No history yet</p>'
+                : state.history.map(item => `
+                    <div class="history-item">
+                        <div>
+                            <strong>${item.action}</strong>
+                            <div style="font-size: 0.8rem; color: #64748b;">${item.time}</div>
+                        </div>
+                        <i class="fas fa-${item.type === 'error' ? 'exclamation-circle' : item.type === 'success' ? 'check-circle' : 'info-circle'}"></i>
+                    </div>
+                `).join('');
+        }
+
+        // Theme toggle
+        function toggleTheme() {
+            state.theme = state.theme === 'dark' ? 'light' : 'dark';
+            document.body.classList.toggle('light-theme');
+            localStorage.setItem('theme', state.theme);
+            document.getElementById('theme-icon').className = state.theme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
+        }
+
+        // Presentation mode
+        function togglePresentationMode() {
+            state.presentationMode = !state.presentationMode;
+            document.body.classList.toggle('presentation-mode', state.presentationMode);
+            if (state.presentationMode) {
+                document.getElementById('presentation-mode').innerHTML = '<i class="fas fa-times"></i> <span>Exit Presentation</span>';
+            } else {
+                document.getElementById('presentation-mode').innerHTML = '<i class="fas fa-tv"></i> <span>Presentation</span>';
+            }
+        }
+
+        // Print functionality
+        function printData() {
+            window.print();
+            addToHistory('Printed data', 'info');
+        }
+
+        // Import data
+        function importData(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const text = e.target.result;
+                    const lines = text.split('\n').filter(line => line.trim());
+                    const headers = lines[0].split(',').map(h => h.trim());
+                    
+                    lines.slice(1).forEach(line => {
+                        const values = line.split(',').map(v => v.trim());
+                        headers.forEach((header, idx) => {
+                            if (values[idx] && state.data[header.toUpperCase()]) {
+                                const value = values[idx].trim();
+                                if (value && !state.globalSet.has(value)) {
+                                    state.data[header.toUpperCase()].push(value);
+                                    state.globalSet.add(value);
+                                }
+                            }
+                        });
+                    });
+                    
+                    state.columns.forEach(col => renderColumn(col));
+                    updateStats();
+                    autoSave();
+                    showToast('Data imported successfully', 'success');
+                    addToHistory('Imported data from file', 'success');
+                } catch (error) {
+                    showToast('Error importing file', 'error');
+                    console.error(error);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // QR Scanner
+        let qrStream = null;
+        function startQRScanner() {
+            document.getElementById('qr-scanner').classList.add('active');
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+                .then(stream => {
+                    qrStream = stream;
+                    const video = document.getElementById('qr-video');
+                    video.srcObject = stream;
+                    video.play();
+                    scanQRCode();
+                })
+                .catch(err => {
+                    showToast('Error accessing camera', 'error');
+                    console.error(err);
+                });
+        }
+
+        function stopQRScanner() {
+            if (qrStream) {
+                qrStream.getTracks().forEach(track => track.stop());
+                qrStream = null;
+            }
+            document.getElementById('qr-scanner').classList.remove('active');
+        }
+
+        function scanQRCode() {
+            const video = document.getElementById('qr-video');
+            const canvas = document.getElementById('qr-canvas');
+            const context = canvas.getContext('2d');
+            
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                canvas.height = video.videoHeight;
+                canvas.width = video.videoWidth;
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                const code = jsQR(imageData.data, imageData.width, imageData.height);
+                
+                if (code) {
+                    processScannedValue(code.data);
+                    stopQRScanner();
+                    showToast('QR code scanned successfully', 'success');
+                }
+            }
+            
+            if (document.getElementById('qr-scanner').classList.contains('active')) {
+                requestAnimationFrame(scanQRCode);
+            }
+        }
+
+        // Offline detection
+        function updateOfflineStatus() {
+            state.isOffline = !navigator.onLine;
+            document.getElementById('offline-indicator').classList.toggle('active', state.isOffline);
+        }
+
+        // Keyboard shortcuts
+        function setupKeyboardShortcuts() {
+            document.addEventListener('keydown', (e) => {
+                if (e.ctrlKey || e.metaKey) {
+                    switch(e.key) {
+                        case '1':
+                        case '2':
+                        case '3':
+                        case '4':
+                            e.preventDefault();
+                            const colIndex = parseInt(e.key) - 1;
+                            if (state.columns[colIndex]) {
+                                setActiveColumn(state.columns[colIndex]);
+                            }
+                            break;
+                        case 'c':
+                            if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+                                e.preventDefault();
+                                copyColumnData(state.activeColumn);
+                            }
+                            break;
+                        case 's':
+                            e.preventDefault();
+                            exportToCSV();
+                            break;
+                        case 'f':
+                            e.preventDefault();
+                            document.getElementById('search-container').style.display = 'flex';
+                            document.getElementById('search-input').focus();
+                            break;
+                        case 'k':
+                            e.preventDefault();
+                            clearAllData();
+                            break;
+                    }
+                } else if (e.key === 'Escape') {
+                    document.getElementById('search-container').style.display = 'none';
+                    document.getElementById('search-input').value = '';
+                    performSearch('');
+                }
+            });
+        }
+
+        // Enhanced notifications
+        const enhancedNotifications = {
+            show: function(message, type = 'success', persistent = false) {
+                showToast(message, type);
+                state.notificationHistory.unshift({ message, type, timestamp: new Date().toISOString() });
+                if (state.notificationHistory.length > 50) state.notificationHistory.pop();
+                localStorage.setItem('notificationHistory', JSON.stringify(state.notificationHistory));
+            }
+        };
+
         // Make functions available globally for onclick handlers
         window.removeSerial = removeSerial;
+        window.exportToCSV = exportToCSV;
+        window.exportToExcel = exportToExcel;
+        window.exportToPDF = exportToPDF;
+        window.toggleTheme = toggleTheme;
+        window.togglePresentationMode = togglePresentationMode;
+        window.printData = printData;
+        window.startQRScanner = startQRScanner;
+        window.stopQRScanner = stopQRScanner;
     </script>
 </body>
 </html>
