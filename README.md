@@ -1,12 +1,11 @@
 # SerialScan Pro
 
-Aplicación web profesional para escanear y gestionar números de serie de equipos con soporte multiidioma (Español/Inglés) y autenticación de usuarios.
+Aplicación web profesional para escanear y gestionar números de serie de equipos con soporte multiidioma (Español/Inglés).
 
 ## 🚀 Características
 
 - ✅ **Escáner de Seriales**: Captura rápida de números de serie mediante escáner de código de barras
 - ✅ **Multiidioma**: Soporte completo para Español e Inglés (inglés como idioma principal)
-- ✅ **Autenticación de Usuarios**: Sistema de login/registro con Firebase Authentication
 - ✅ **4 Columnas de Categorías**: ONT, EEROS, STB, STICKS
 - ✅ **Detección de Duplicados**: Registro automático de seriales duplicados con contador
 - ✅ **Almacenamiento Local**: Persistencia de datos en localStorage del navegador
@@ -18,11 +17,8 @@ Aplicación web profesional para escanear y gestionar números de serie de equip
 ## 📋 Requisitos
 
 - Navegador web moderno (Chrome, Firefox, Edge, Safari)
-- Firebase (opcional, para autenticación en producción)
 
 ## 🛠️ Instalación
-
-### Opción 1: Usar directamente (Modo Demo)
 
 1. Clona este repositorio:
 ```bash
@@ -31,26 +27,15 @@ git clone https://github.com/nogegutierrez/dashboard.git
 
 2. Abre `index.html` en tu navegador
 
-3. Usa los usuarios de prueba:
-   - Email: `admin@serialscan.com` / Password: `admin123`
-   - Email: `user@serialscan.com` / Password: `user123`
-
-### Opción 2: Con Firebase (Recomendado para Producción)
-
-1. Configura Firebase siguiendo las instrucciones en [FIREBASE_SETUP.md](FIREBASE_SETUP.md)
-
-2. Actualiza las credenciales de Firebase en `index.html` (línea ~1596)
-
-3. Abre `index.html` en tu navegador
+3. ¡Listo! La aplicación está lista para usar
 
 ## 📖 Uso
 
 ### Escaneo de Seriales
 
-1. Inicia sesión con tu cuenta
-2. Selecciona la columna activa (ONT, EEROS, STB, STICKS)
-3. Escanea el código de barras del serial con tu escáner
-4. El serial se agregará automáticamente a la columna activa
+1. Selecciona la columna activa (ONT, EEROS, STB, STICKS)
+2. Escanea el código de barras del serial con tu escáner
+3. El serial se agregará automáticamente a la columna activa
 
 ### Gestión de Columnas
 
@@ -82,7 +67,6 @@ git clone https://github.com/nogegutierrez/dashboard.git
 ```
 dashboard/
 ├── index.html              # Aplicación principal (todo en un archivo)
-├── FIREBASE_SETUP.md       # Guía de configuración de Firebase
 └── README.md              # Este archivo
 ```
 
@@ -91,16 +75,14 @@ dashboard/
 - HTML5
 - CSS3 (con variables CSS y animaciones)
 - JavaScript (Vanilla JS)
-- Firebase Authentication (opcional)
 - Font Awesome Icons
 - LocalStorage API
 
 ## 📝 Notas
 
-- Los datos se almacenan en localStorage del navegador (por usuario)
-- Cada usuario tiene sus propios datos independientes
+- Los datos se almacenan en localStorage del navegador
 - Los datos persisten entre sesiones
-- Al hacer logout, se limpian todos los datos locales
+- Al limpiar el navegador o cambiar de dispositivo, los datos se perderán (son locales)
 
 ## 🤝 Contribuciones
 
@@ -124,11 +106,9 @@ Este proyecto está bajo la Licencia MIT - ver el archivo LICENSE para detalles.
 
 ## 🙏 Agradecimientos
 
-- Firebase por el servicio de autenticación
 - Font Awesome por los iconos
 - La comunidad de desarrolladores web
 
 ---
 
 ⭐ Si este proyecto te fue útil, considera darle una estrella en GitHub!
-
